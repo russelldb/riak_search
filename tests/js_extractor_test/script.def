@@ -1,0 +1,46 @@
+[
+ {echo, "Setting up custom JS extractor..."},
+ extract_js_vm_count_check,
+ {index_bucket, <<"test">>},
+ {set_extractor, <<"test">>,
+  {struct,
+   [{<<"language">>, <<"javascript">>},
+    {<<"source">>, <<"function() { return {'value':'hello world'}; }">>}]}},
+
+ {echo, "Putting in some data..."},
+ {putobj, <<"test">>, <<"js_extractor_test_one">>,
+  "text/plain", <<"Peter Piper picked a peck of pickled peppers.">>},
+ {putobj, <<"test">>, <<"js_extractor_test_two">>,
+  "text/plain", <<"A peck of pickled peppers Peter Piper picked.">>},
+ {putobj, <<"test">>, <<"js_extractor_test_three">>,
+  "text/plain", <<"If Peter Piper picked a peck of pickled peppers,">>},
+ {putobj, <<"test">>, <<"js_extractor_test_four">>,
+  "text/plain", <<"Where's the peck of pickled peppers Peter Piper picked?">>},
+ {putobj, <<"test">>, <<"js_extractor_test_five">>,
+  "application/json", <<"{\"outer\":{\"inner1\":\"snooty\",\"inner2\":\"fox\"}}">>},
+
+ {echo, "Checking extractor data is present..."},
+ {search, "value:hello world", [{length, 5}]},
+
+ {echo, "Checking object data is not present..."},
+ {search, "value:quaint", [{length, 0}]},
+ {search, "value:Peter", [{length, 0}]},
+ {search, "outer_inner1:snooty", [{length, 0}]},
+ {search, "outer_inner2:fox", [{length, 0}]},
+
+ %% Cleanup.
+ {echo, "De-indexing documents (by deleting k/v objects)..."},
+ {delobj, <<"test">>, <<"js_extractor_test_one">>},
+ {delobj, <<"test">>, <<"js_extractor_test_two">>},
+ {delobj, <<"test">>, <<"js_extractor_test_three">>},
+ {delobj, <<"test">>, <<"js_extractor_test_four">>},
+ {delobj, <<"test">>, <<"js_extractor_test_five">>},
+
+ {echo, "Clearing custom JS extractor..."},
+ {set_extractor, <<"test">>, undefined},
+
+ {echo, "Checking extractor data is gone..."},
+ {search, "value:hello world", [{length, 0}]},
+
+ {echo, "Done"}
+].
