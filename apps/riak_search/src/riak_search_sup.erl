@@ -48,18 +48,15 @@ init([]) ->
 
 extract_js_vm_count() ->
     case app_helper:get_env(riak_search, extract_js_vm_count, undefined) of
-        undefined ->
-            error_logger:info_msg("The riak_search application parameter extract_js_vm_count has not been defined. JavaScript extract functions will not work unless this parameter is set to a positive integer.~n"),
-            0;
-        Size when Size =:= 0 ->
-            error_logger:info_msg("The riak_search application parameter extract_js_vm_count is set to 0. JavaScript extract functions will not work unless this parameter is set to a positive integer.~n"),
-            0;
-        Size when is_integer(Size) andalso Size < 0 ->
-            error_logger:warning_msg("The riak_search application parameter extract_js_vm_count is set to a negative value. JavaScript extract functions will not work unless this parameter is set to a positive integer.~n"),
-            0;
-        Size when is_integer(Size) ->
+        Size when is_integer(Size),
+                  Size > 0 ->
             Size;
         _ ->
-            error_logger:warning_msg("The riak_search application parameter extract_js_vm_count has been set to a non-integer value. JavaScript extract functions will not work unless this parameter is set to a positive integer.~n"),
+            error_logger:info_msg("The riak_search application parameter "
+                                  "`extract_js_vm_count` was either not defined "
+                                  "or given an invalid value. "
+                                  "JavaScript extract functions will not work "
+                                  "unless this parameter is set to a positive "
+                                  "integer.~n"),
             0
     end.
