@@ -5,7 +5,7 @@
  {set_extractor, <<"test">>,
   {struct,
    [{<<"language">>, <<"javascript">>},
-    {<<"source">>, <<"function() { return {'value':'hello world'}; }">>}]}},
+    {<<"source">>, <<"function() { return {\"value\":\"hello world\"}; }">>}]}},
 
  {echo, "Putting in some data..."},
  {putobj, <<"test">>, <<"js_extractor_test_one">>,
