@@ -70,7 +70,7 @@ delete(IFTVPKList, State) ->
 
 info(Index, Field, Term, Sender, State) ->
     %% Pid = State#state.pid,
-    {ok, Count} = merge_index:frequency(State#state.root, Index, Field, Term),
+    Count = merge_index:frequency(State#state.root, Index, Field, Term),
     riak_search_backend:info_response(Sender, [{Term, node(), Count}]),
     noreply.
 
