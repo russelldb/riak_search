@@ -45,7 +45,8 @@ start(Partition, _Config) ->
     {ok, Root} = application:get_env(merge_index, data_root),
     PartitionRoot = filename:join([Root, PartitionStr]),
     {ok, Pid} = merge_index:start_link(PartitionRoot),
-    {ok, #state { partition=Partition, pid=Pid, root=PartitionRoot }}.
+    {ok, #state { partition=Partition, pid=Pid,
+                  root=list_to_atom(PartitionRoot) }}.
 
 %% @spec stop(state()) -> ok | {error, Reason :: term()}
 stop(State) ->
