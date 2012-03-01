@@ -16,7 +16,7 @@
 
 preplan(Op, State) ->
     case riak_search_op:preplan(Op#intersection.ops, State) of
-        [ChildOp] -> 
+        [ChildOp] ->
             ChildOp;
         ChildOps ->
             NewOp = Op#intersection { ops=ChildOps },
@@ -31,9 +31,9 @@ chain_op(Op, OutputPid, OutputRef, State) ->
     Iterator2 = make_filter_iterator(Iterator1),
 
     %% Spawn up pid to gather and send results...
-    F = fun() -> 
+    F = fun() ->
                 erlang:link(State#search_state.parent),
-                riak_search_op_utils:gather_iterator_results(OutputPid, OutputRef, Iterator2()) 
+                riak_search_op_utils:gather_iterator_results(OutputPid, OutputRef, Iterator2())
         end,
     erlang:spawn_link(F),
 
@@ -44,7 +44,7 @@ chain_op(Op, OutputPid, OutputRef, State) ->
 %% negated results.
 make_filter_iterator(Iterator) ->
     fun() -> filter_iterator(Iterator()) end.
-filter_iterator({_, Op, Iterator}) 
+filter_iterator({_, Op, Iterator})
   when (is_tuple(Op) andalso is_record(Op, negation)) orelse Op == true ->
     %% Term is negated, so skip it.
     filter_iterator(Iterator());
