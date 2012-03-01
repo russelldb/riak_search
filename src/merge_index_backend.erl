@@ -35,7 +35,7 @@
                     | {error, Reason::any()}.
 
 % @type state() = term().
--record(state, {partition, pid}).
+-record(state, {partition, pid, root}).
 
 %% @spec start(Partition :: integer(), Config :: proplist()) ->
 %%          {ok, state()} | {{error, Reason :: term()}, state()}
@@ -45,7 +45,7 @@ start(Partition, _Config) ->
     {ok, Root} = application:get_env(merge_index, data_root),
     PartitionRoot = filename:join([Root, PartitionStr]),
     {ok, Pid} = merge_index:start_link(PartitionRoot),
-    {ok, #state { partition=Partition, pid=Pid }}.
+    {ok, #state { partition=Partition, pid=Pid, root=PartitionRoot }}.
 
 %% @spec stop(state()) -> ok | {error, Reason :: term()}
 stop(State) ->
@@ -69,8 +69,8 @@ delete(IFTVPKList, State) ->
     {reply, {deleted, node()}, State}.
 
 info(Index, Field, Term, Sender, State) ->
-    Pid = State#state.pid,
-    {ok, Count} = merge_index:frequency(Pid, Index, Field, Term),
+    %% Pid = State#state.pid,
+    {ok, Count} = merge_index:frequency(State#state.root, Index, Field, Term),
     riak_search_backend:info_response(Sender, [{Term, node(), Count}]),
     noreply.
 
