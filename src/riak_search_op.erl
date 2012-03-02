@@ -7,6 +7,7 @@
 -module(riak_search_op).
 -export([
          preplan/1,
+         frequency/1,
          preplan/2,
          chain_op/4,
          op_to_module/1
@@ -24,6 +25,10 @@ preplan(OpList, State) when is_list(OpList) ->
 preplan(Op, State) when is_tuple(Op) ->
     Module = riak_search_op:op_to_module(Op),
     Module:preplan(Op, State).
+
+frequency(Op) ->
+    Module = riak_search_op:op_to_module(Op),
+    Module:frequency(Op).
 
 %% Kick off execution of the query graph.
 chain_op(OpList, OutputPid, Ref, SearchState) when is_list(OpList)->

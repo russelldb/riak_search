@@ -49,7 +49,7 @@ chain_op(Op, OutputPid, OutputRef, State) ->
 
 -spec order_ops([term()]) -> [term()].
 order_ops(Ops) ->
-    Freqs = lists:sort(lists:map(fun riak_search_op:freq/1, Ops)),
+    Freqs = lists:sort(lists:map(fun riak_search_op:frequency/1, Ops)),
     [Op || {_, Op} <- Freqs].
 
 -spec get_candidate_set([term()], term()) ->
