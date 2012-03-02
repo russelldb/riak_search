@@ -22,7 +22,7 @@ preplan(Op, State) ->
     ChildOps = riak_search_op:preplan(#group { ops=Op#scope.ops }, NewState),
     Op#scope { ops=ChildOps }.
 
-frequency(Op=#scope{ops=ChildOp}) ->
+frequency(#scope{ops=ChildOp}) ->
     riak_search_op:frequency(ChildOp).
 
 chain_op(Op, OutputPid, OutputRef, State) ->

@@ -10,6 +10,7 @@
          frequency/1,
          preplan/2,
          chain_op/4,
+         chain_op/5,
          op_to_module/1
         ]).
 -include("riak_search.hrl").
@@ -41,6 +42,15 @@ chain_op(Op, OutputPid, Ref, SearchState) ->
                 erlang:link(SearchState#search_state.parent),
                 Module = op_to_module(Op),
                 Module:chain_op(Op, OutputPid, Ref, SearchState)
+        end,
+    erlang:spawn_link(F),
+    {ok, 1}.
+
+chain_op(Op, OutputPid, Ref, SearchState, CandidateSet) ->
+    F = fun() ->
+                erlang:link(SearchState#search_state.parent),
+                Module = op_to_module(Op),
+                Module:chain_op(Op, OutputPid, Ref, SearchState, CandidateSet)
         end,
     erlang:spawn_link(F),
     {ok, 1}.
