@@ -461,7 +461,10 @@ sort_results(#riak_search_ref{querynorm=QNorm, termcount=TermCount},
                                   calculate_scores(QNorm, TermCount, Results)),
     [{Index, DocID, Props} || {_, Index, DocID, Props} <- SortedResults].
 
-calculate_scores(QueryNorm, NumTerms, [{Index, DocID, Props}|Results]) ->
+%% calculate_scores(QueryNorm, NumTerms, [{Index, DocID, Props}|Results]) ->
+%% TODO: FIXME: Removing the Index to test something
+calculate_scores(QueryNorm, NumTerms, [{DocID, Props}|Results]) ->
+    Index = <<"baloney">>,
     ScoreList = proplists:get_value(score, Props, []),
     Coord = length(ScoreList) / (NumTerms + 1),
     Score = Coord * QueryNorm * lists:sum(ScoreList),
