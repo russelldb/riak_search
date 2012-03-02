@@ -36,7 +36,7 @@ chain_op(Op, OutputPid, OutputRef, State) ->
 
     %% Must sequentially check results against candidate set.
     FinalCandidates =
-        lists:fold(remote_intersection(State), CandidateSet, Ops3),
+        lists:foldl(remote_intersection(State), CandidateSet, Ops3),
 
     F = fun() ->
                 erlang:link(State#search_state.parent),
