@@ -174,7 +174,12 @@ calculate_score(ScoringVars, Props) ->
                     false ->
                         [Score]
                 end,
-    lists:keystore(score, 1, Props, {score, ScoreList}).
+
+    %% TODO: FIXME: Removing score from prop list just to test some
+    %% stuff
+
+    %% lists:keystore(score, 1, Props, {score, ScoreList}).
+    Props.
 
 -spec get_preflist(binary(), pos_integer()) -> list().
 get_preflist(DocIdx, NVal) ->
