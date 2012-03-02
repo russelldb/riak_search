@@ -22,8 +22,9 @@ preplan(Op, State) ->
     ChildOps = riak_search_op:preplan(#group { ops=Op#scope.ops }, NewState),
     Op#scope { ops=ChildOps }.
 
-frequency(#scope{ops=ChildOp}) ->
-    riak_search_op:frequency(ChildOp).
+frequency(Op=#scope{ops=ChildOp}) ->
+    {Freq, _} = riak_search_op:frequency(ChildOp),
+    {Freq, Op}.
 
 chain_op(Op, OutputPid, OutputRef, State) ->
     %% Update state and switch control to the group operator...
