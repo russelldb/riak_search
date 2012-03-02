@@ -69,12 +69,15 @@ get_candidate_set([FirstOp|Ops], State) ->
 
 remote_intersection(State) ->
     fun(Op, CandidateSet) ->
+            lager:error("remote_intersection Op: ~p CandidateSet: ~p",
+                        [Op, CandidateSet]),
             Itr1 = riak_search_op_utils:iterator_tree(fun select_fun/2,
                                                       [Op],
                                                       State,
                                                       CandidateSet),
             Itr2 = make_filter_iterator(Itr1),
             CandidateSet2 = riak_search_op_utils:docs(Itr2),
+            lager:error("remote_intersection CandidateSet2: ~p", [CandidateSet2]),
             CandidateSet2
     end.
 
