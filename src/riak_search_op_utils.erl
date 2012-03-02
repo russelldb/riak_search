@@ -20,8 +20,8 @@
 docs(Iterator) ->
     docs(Iterator(), []).
 
-docs({{_Idx,DocId,_Props}, _Op, Iterator}, Acc) ->
-    docs(Iterator(), [DocId|Acc]);
+docs({{_Idx,DocId,Props}, _Op, Iterator}, Acc) ->
+    docs(Iterator(), [{DocId, Props}|Acc]);
 docs({eof, _}, Acc) ->
     ordsets:from_list(Acc).
 
