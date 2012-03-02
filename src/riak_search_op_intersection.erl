@@ -25,20 +25,53 @@ preplan(Op, State) ->
     end.
 
 chain_op(Op, OutputPid, OutputRef, State) ->
-    %% Create an iterator chain...
-    OpList = Op#intersection.ops,
-    Iterator1 = riak_search_op_utils:iterator_tree(fun select_fun/2, OpList, State),
-    Iterator2 = make_filter_iterator(Iterator1),
+    Ops1 = Op#intersection.ops,
 
-    %% Spawn up pid to gather and send results...
+    %% Order ops in ascending order by frequency so that minimal
+    %% candidate set may be used.
+    Ops2 = order_ops(Ops1),
+
+    %% Reailze the candidate set.
+    {CandidateSet, Ops3} = get_candidate_set(Ops2, State),
+
+    %% Must sequentially check results against candidate set.
+    FinalCandidates =
+        lists:fold(remote_intersection(State), CandidateSet, Ops3),
+
     F = fun() ->
                 erlang:link(State#search_state.parent),
-                riak_search_op_utils:gather_iterator_results(OutputPid, OutputRef, Iterator2())
+                OutputPid ! {results, FinalCandidates, OutputRef},
+                OutputPid ! {disconnect, OutputRef}
         end,
     erlang:spawn_link(F),
 
-    %% Return.
     {ok, 1}.
+
+-spec order_ops([term()]) -> [term()].
+order_ops(Ops) ->
+    Freqs = lists:sort(lists:map(fun riak_search_op:freq/1, Ops)),
+    [Op || {_, Op} <- Freqs].
+
+-spec get_candidate_set([term()], term()) ->
+                               {CandidateSet::[term()], Ops::[term()]}.
+get_candidate_set([FirstOp|Ops], State) ->
+    Itr1 = riak_search_op_utils:iterator_tree(fun select_fun/2,
+                                              [FirstOp],
+                                              State),
+    Itr2 = make_filter_iterator(Itr1),
+    CandidateSet = riak_search_op_utils:docs(Itr2),
+    {CandidateSet, Ops}.
+
+remote_intersection(State) ->
+    fun(Op, CandidateSet) ->
+            Itr1 = riak_search_op_utils:iterator_tree(fun select_fun/2,
+                                                      [Op],
+                                                      State,
+                                                      CandidateSet),
+            Itr2 = make_filter_iterator(Itr1),
+            CandidateSet2 = riak_search_op_utils:docs(Itr2),
+            CandidateSet2
+    end.
 
 %% Given an iterator, return a new iterator that filters out any
 %% negated results.

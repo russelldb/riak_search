@@ -70,16 +70,15 @@ delete(IFTVPKList, State) ->
     {reply, {deleted, node()}, State}.
 
 info(Index, Field, Term, Sender, State) ->
-    %% Pid = State#state.pid,
     Count = merge_index:frequency(State#state.root, Index, Field, Term),
     riak_search_backend:info_response(Sender, [{Term, node(), Count}]),
     noreply.
 
 -spec stream(index(), field(), s_term(), fun(), sender(), #state{}) -> noreply.
-stream(Index, Field, Term, Filter, Sender, State) ->
+stream(Index, Field, Term, {Filter, CandidateSet}, Sender, State) ->
     Pid = State#state.pid,
-    spawn_link(?MODULE, stream_worker, [Pid, Index, Field,
-                                        Term, Filter, Sender]),
+    spawn_link(?MODULE, stream_worker, [Pid, Index, Field, Term,
+                                        {Filter, CandidateSet}, Sender]),
     noreply.
 
 range(Index, Field, StartTerm, EndTerm, Size, Filter, Sender, State) ->
@@ -138,8 +137,8 @@ drop(State) ->
 
 -spec stream_worker(pid(), index(), field(), s_term(), fun(), sender()) ->
                            any().
-stream_worker(Pid, Index, Field, Term, Filter, Sender) ->
-    Iter = merge_index:lookup(Pid, Index, Field, Term, Filter),
+stream_worker(Pid, Index, Field, Term, {Filter, CandidateSet}, Sender) ->
+    Iter = merge_index:lookup(Pid, Index, Field, Term, {Filter, CandidateSet}),
     stream_to(Iter(), Sender).
 
 -spec range_worker(pid(), index(), field(), s_term(), s_term(), mi_size(),

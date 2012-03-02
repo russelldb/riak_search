@@ -26,6 +26,7 @@
 -record(delete_v1, {iftv_list}).
 -record(info_v1, {index, field, term}).
 -record(stream_v1, {index, field, term, filter_fun}).
+-record(stream_v2, {index, field, term, filter_fun, candidate_set}).
 -record(range_v1, {index, field, start_term, end_term, size, filter_fun}).
 
 -define(HANDOFF_VER,1).
@@ -54,12 +55,15 @@ info(Preflist, Index, Field, Term, ReplyTo) ->
 
 -spec stream(list(), index(), field(), term(), fun(), pid()) ->
                     {ok, stream_ref()}.
-stream(Preflist, Index, Field, Term, FilterFun, ReplyTo) ->
-    Req = #stream_v1{
+stream(Preflist, Index, Field, Term, {FilterFun, CandidateSet}, ReplyTo) ->
+    %% TODO: FIXME: Once again, breaking rolling upgrade b/c of
+    %% candidate_set
+    Req = #stream_v2{
       index = Index,
       field = Field,
       term = Term,
-      filter_fun = FilterFun
+      filter_fun = FilterFun,
+      candidate_set = CandidateSet
      },
     Ref = {stream_response, make_ref()},
     command(Preflist, Req, {raw, Ref, ReplyTo}),
@@ -128,6 +132,16 @@ handle_command(#stream_v1{index = Index,
                           filter_fun = FilterFun},
                Sender, #vstate{bmod=BMod,bstate=BState}=VState) ->
     bmod_response(BMod:stream(Index, Field, Term, FilterFun, Sender, BState), VState);
+
+handle_command(#stream_v2{index = Index,
+                          field = Field,
+                          term = Term,
+                          filter_fun = FilterFun,
+                          candidate_set = CandidateSet},
+               Sender, #vstate{bmod=BMod,bstate=BState}=VState) ->
+    bmod_response(BMod:stream(Index, Field, Term, {FilterFun, CandidateSet},
+                              Sender, BState),
+                  VState);
 
 handle_command(#range_v1{index = Index,
                          field = Field,

@@ -7,13 +7,23 @@
 -module(riak_search_op_utils).
 
 -export([
+    docs/1,
     iterator_tree/3,
+    iterator_tree/4,
     gather_iterator_results/3,
     gather_stream_results/4
 ]).
 
 -include("riak_search.hrl").
 -define(STREAM_TIMEOUT, 15000).
+
+docs(Iterator) ->
+    docs(Iterator(), []).
+
+docs({{_Idx,DocId,_Props}, _Op, Iterator}, Acc) ->
+    docs(Iterator(), [DocId|Acc]);
+docs({eof, _}, Acc) ->
+    ordsets:from_list(Acc).
 
 %% Given a long list of iterators (which are zero arity functions that
 %% dole out results one at a time in the form {Term, Op, NewIterator}
@@ -23,7 +33,12 @@
 %% sorted order as well as filter out any results that we don't want.
 iterator_tree(SelectFun, OpList, SearchState) ->
     %% Turn all operations into iterators and then combine into a tree.
-    Iterators = [it_op(X, SearchState) || X <- OpList],
+    Iterators = [it_op(X, SearchState, none) || X <- OpList],
+    it_combine(SelectFun, Iterators).
+
+iterator_tree(SelectFun, OpList, SearchState, CandidateSet) ->
+    %% Turn all operations into iterators and then combine into a tree.
+    Iterators = [it_op(X, SearchState, CandidateSet) || X <- OpList],
     it_combine(SelectFun, Iterators).
 
 %% @private Given a list of iterators, combine into a tree. Works by
@@ -57,7 +72,7 @@ it_combine_inner(SelectFun, [IteratorA,IteratorB|Rest]) ->
 %% it. The iterator will return {Result, NotFlag, NewIteratorFun} each
 %% time it is called, or block until one is available. When there are
 %% no more results, it will return {eof, NotFlag}.
-it_op(Op, SearchState) ->
+it_op(Op, SearchState, CandidateSet) ->
     %% Spawn a collection process...
     Ref = make_ref(),
     F = fun() ->
@@ -68,8 +83,15 @@ it_op(Op, SearchState) ->
         end,
     Pid = erlang:spawn_link(F),
 
-    %% Chain the op...
-    riak_search_op:chain_op(Op, Pid, Ref, SearchState),
+    case CandidateSet of
+        none ->
+            riak_search_op:chain_op(Op, Pid, Ref, SearchState);
+        _ ->
+            %% TODO: Perhaps name this function something entirely
+            %% different to indicate it should filter its output based
+            %% on the CandidateSet.
+            riak_search_op:chain_op(Op, Pid, Ref, SearchState, CandidateSet)
+    end,
 
     %% Return an iterator function. Returns
     %% a new result.
@@ -90,7 +112,7 @@ it_op_inner(Pid, Ref, Op) ->
         {result, Result, Ref} ->
             {Result, Op, fun() -> it_op_inner(Pid, Ref, Op) end};
         X ->
-            io:format("it_inner(~p, ~p, ~p)~n>> unknown message: ~p~n", [Pid, Ref, Op, X])
+            lager:error("it_inner(~p, ~p, ~p)~n>> unknown message: ~p~n", [Pid, Ref, Op, X])
     end.
 
 %% @private This runs in a separate process, collecting the incoming
@@ -173,4 +195,3 @@ gather_stream_results(Ref, OutputPid, OutputRef, TransformFun) ->
         ?STREAM_TIMEOUT ->
             throw(stream_timeout)
     end.
-
