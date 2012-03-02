@@ -25,18 +25,23 @@ preplan(Op, State) ->
     end.
 
 chain_op(Op, OutputPid, OutputRef, State) ->
+    lager:error("intersection Op: ~p State: ~p", [Op, State]),
     Ops1 = Op#intersection.ops,
+    lager:error("intersection Ops1: ~p", [Ops1]),
 
     %% Order ops in ascending order by frequency so that minimal
     %% candidate set may be used.
     Ops2 = order_ops(Ops1),
+    lager:error("intersection Ops2: ~p", [Ops2]),
 
     %% Reailze the candidate set.
     {CandidateSet, Ops3} = get_candidate_set(Ops2, State),
+    lager:error("intersection CandidateSet: ~p Ops3: ~p", [CandidateSet, Ops3]),
 
     %% Must sequentially check results against candidate set.
     FinalCandidates =
         lists:foldl(remote_intersection(State), CandidateSet, Ops3),
+    lager:error("intersection FinalCandidates: ~p", [FinalCandidates]),
 
     F = fun() ->
                 erlang:link(State#search_state.parent),
