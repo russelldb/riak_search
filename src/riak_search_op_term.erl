@@ -32,13 +32,11 @@ preplan(Op, State) ->
     FieldName = State#search_state.field,
     Term = to_binary(Op#term.s),
     Weights1 = info(IndexName, FieldName, Term),
-    lager:error("term preplan Weights1: ~p", [Weights1]),
 
     %% TODO: Add ability for search nodes to negotiate protocol so
     %% that in future I can change info to not return Term which is
     %% just filtered out
     Weights2 = [{Node, Count} || {_, Node, Count} <- Weights1],
-    lager:error("term preplan Weights2: ~p", [Weights2]),
     Length = length(Weights2),
 
     if Length == 0 ->
